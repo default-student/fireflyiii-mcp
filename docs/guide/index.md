@@ -15,6 +15,7 @@
 | [npm — stdio](./stdio) | stdio | Simplest. AI client and server on the same machine. |
 | [npm — HTTP/OAuth](./http-oauth) | HTTP + OAuth 2.0 | AI client connecting remotely, prefers OAuth over a PAT. |
 | [npm — HTTP/PAT](./http-pat) | HTTP + Bearer PAT | Headless callers — gateways, automation, no browser. |
+| [Private server + SSH](./remote-stdio) | stdio over SSH | Keep the Firefly token on a server you control without exposing an HTTP port. |
 | [Docker — HTTP](./docker) | HTTP + OAuth 2.0 | Self-hosted on a home lab or server. |
 | [Git checkout](./git-checkout) | stdio or HTTP | Contributing or local development. |
 
@@ -23,6 +24,8 @@
 - **Yes** → [npm — stdio](./stdio). One process, no server to host, no bridge.
 - **No, but you can host this server publicly** → [Docker — HTTP](./docker) with OAuth. The only option where no client device stores a long-lived token.
 - **No, and the server stays on your LAN/VPN** → host it over HTTP and bridge with `mcp-remote`.
+
+You can also run the server on a private machine and start it over SSH using [stdio over SSH](./remote-stdio). The client machine needs SSH access to that server.
 
 Using Claude Desktop? See [Claude Desktop](./claude-desktop) — its config file does **not** accept HTTP servers.
 

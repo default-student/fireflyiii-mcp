@@ -33,6 +33,8 @@ Choose your setup method:
 | [Docker — HTTP](#option-3-docker--http-self-hosted) | HTTP + OAuth or PAT | Self-hosted on a server or home lab |
 | [Git checkout](#option-4-git-checkout-development) | stdio or HTTP | Contributing or local development |
 
+To install the privacy-filtered fork on a private server and connect from another device over SSH, see the [private server + SSH guide](docs/guide/remote-stdio.md). This keeps the Firefly III token on the server and does not require an exposed HTTP port.
+
 All options except Docker require **Node.js 22.12+**.
 
 ---

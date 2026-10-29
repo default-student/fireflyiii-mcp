@@ -22,6 +22,7 @@ export default defineConfig({
             { text: 'npm + stdio', link: '/guide/stdio' },
             { text: 'npm + HTTP/OAuth', link: '/guide/http-oauth' },
             { text: 'npm + HTTP/PAT', link: '/guide/http-pat' },
+            { text: 'Private server + SSH', link: '/guide/remote-stdio' },
             { text: 'Docker + HTTP', link: '/guide/docker' },
             { text: 'Git checkout', link: '/guide/git-checkout' },
             { text: 'Claude Desktop', link: '/guide/claude-desktop' },
