@@ -223,7 +223,7 @@ describe('handler smoke — attachments', () => {
     expect(result).toMatchObject({ isError: true });
   });
 
-  it('download_attachment handler returns an image block for image attachments', async () => {
+  it('download_attachment handler withholds images that could contain monetary values', async () => {
     const { server, handlers } = createMockServer();
     const client = {
       get: vi.fn().mockResolvedValueOnce({
@@ -237,7 +237,9 @@ describe('handler smoke — attachments', () => {
     } as unknown as FireflyClient;
     registerAttachmentTools(server, client);
     const result = await handlers.get('download_attachment')!({ id: '7' });
-    expect(result).toMatchObject({ content: [{ type: 'image', mimeType: 'image/png' }] });
+    expect(result).toMatchObject({
+      content: [{ type: 'text', text: '[hidden: visual content may contain monetary values]' }],
+    });
   });
 
   it('download_attachment handler returns isError on failure', async () => {

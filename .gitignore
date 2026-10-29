@@ -42,3 +42,8 @@ coverage/
 
 # Internal planning docs — kept locally but not tracked
 docs/superpowers/
+
+# Local Firefly server bridge contains Tailnet-specific host details
+/.agents/firefly-cloud-known_hosts
+/.agents/fireflyiii-mcp-cloud-bridge.sh
+/.agents/firefly-cloud-deployment.md

@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { formatError } from '../client.js';
+import { redactMonetaryOutput, redactTextOutput } from '../privacy.js';
 import type { QueryParams } from '../types.js';
 
 /** Raw shape accepted as a tool input schema (mutable variant of z.ZodRawShape). */
@@ -39,17 +40,18 @@ export function defineTool(
   server.registerTool(name, config, async (args: Record<string, unknown>) => {
     try {
       const result = await fetch(args);
+      const safeResult = redactMonetaryOutput(result);
       return {
         content: [
           {
             type: 'text' as const,
             // Compact: indentation adds roughly a third more tokens to every result for no gain to the model.
-            text: typeof result === 'string' ? result : JSON.stringify(result),
+            text: typeof safeResult === 'string' ? redactTextOutput(safeResult) : JSON.stringify(safeResult),
           },
         ],
       };
     } catch (err) {
-      return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
+      return { content: [{ type: 'text' as const, text: redactTextOutput(formatError(err)) }], isError: true };
     }
   });
 }
@@ -81,9 +83,17 @@ export function defineContentTool(
 ): void {
   server.registerTool(name, config, async (args: Record<string, unknown>) => {
     try {
-      return await fetch(args);
+      const result = await fetch(args);
+      const safeContent = result.content.flatMap((block) => {
+        if (block.type === 'text') return [{ ...block, text: redactTextOutput(block.text) }];
+        return [{ type: 'text' as const, text: '[hidden: visual content may contain monetary values]' }];
+      });
+      return {
+        ...(redactMonetaryOutput({ ...result, content: safeContent }) as ContentResult),
+        content: safeContent,
+      };
     } catch (err) {
-      return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
+      return { content: [{ type: 'text' as const, text: redactTextOutput(formatError(err)) }], isError: true };
     }
   });
 }

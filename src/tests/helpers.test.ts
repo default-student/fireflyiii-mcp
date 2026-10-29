@@ -6,6 +6,7 @@ import {
   createTtlCache,
   dateOrDateTimeSchema,
   dateSchema,
+  defineContentTool,
   defineTool,
   parseId,
 } from '../tools/_helpers.js';
@@ -29,7 +30,7 @@ describe('defineTool', () => {
     defineTool(server as unknown as McpServer, 'test_tool', { title: 'Test' }, async () => ({ foo: 'bar', n: 1 }));
     const result = await server.getHandler()({});
     expect(result).toEqual({
-      content: [{ type: 'text', text: '{"foo":"bar","n":1}' }],
+      content: [{ type: 'text', text: '{"foo":"bar","n":"[hidden]"}' }],
     });
   });
 
@@ -38,7 +39,7 @@ describe('defineTool', () => {
     defineTool(server as unknown as McpServer, 'test_tool', { title: 'Test' }, async () => 'col1,col2\n1,2');
     const result = await server.getHandler()({});
     expect(result).toEqual({
-      content: [{ type: 'text', text: 'col1,col2\n1,2' }],
+      content: [{ type: 'text', text: 'col1,col2\n[hidden]' }],
     });
   });
 
@@ -61,6 +62,50 @@ describe('defineTool', () => {
     });
     const result = await server.getHandler()({});
     expect(result).toMatchObject({ isError: true, content: [{ type: 'text', text: 'boom' }] });
+  });
+
+  it('redacts monetary fields and echoed error amounts at the shared tool boundary', async () => {
+    const server = makeServer();
+    defineTool(server as unknown as McpServer, 'private_tool', { title: 'Private' }, async () => ({
+      id: '15',
+      amount: '42.50',
+      pagination: { page: 1, total: 4 },
+    }));
+    expect(await server.getHandler()({})).toEqual({
+      content: [{ type: 'text', text: '{"id":"15","amount":"[hidden]","pagination":{"page":1,"total":4}}' }],
+    });
+
+    defineTool(server as unknown as McpServer, 'private_error', { title: 'Private error' }, async () => {
+      throw new Error('API rejected 42.50 EUR');
+    });
+    expect(await server.getHandler()({})).toMatchObject({
+      isError: true,
+      content: [{ type: 'text', text: '[hidden]' }],
+    });
+  });
+
+  it('redacts native content and structured output fields, and blocks images', async () => {
+    const server = makeServer();
+    defineContentTool(
+      server as unknown as McpServer,
+      'content_tool',
+      { title: 'Content' },
+      async () =>
+        ({
+          content: [
+            { type: 'text', text: 'Amount 42.50 EUR' },
+            { type: 'image', data: 'synthetic-image', mimeType: 'image/png' },
+          ],
+          structuredContent: { balance: 42.5 },
+        }) as never,
+    );
+    expect(await server.getHandler()({})).toEqual({
+      content: [
+        { type: 'text', text: '[hidden]' },
+        { type: 'text', text: '[hidden: visual content may contain monetary values]' },
+      ],
+      structuredContent: { balance: '[hidden]' },
+    });
   });
 });
 

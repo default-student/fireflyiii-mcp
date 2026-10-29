@@ -2,6 +2,7 @@ import { completable } from '@modelcontextprotocol/sdk/server/completable.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { FireflyClient } from '../client.js';
+import { redactCompletionOutput, redactTextOutput } from '../privacy.js';
 import {
   type JsonApiListResponse,
   type JsonApiSingleResponse,
@@ -93,7 +94,7 @@ export function registerCategoryTools(server: McpServer, client: FireflyClient):
   const categoryIdSchema = completable(
     z.string().describe('Category ID — use get_categories to find valid IDs'),
     async (value) => {
-      debugLog(`[Autocomplete] Category search input: "${value}"`);
+      debugLog(`[Autocomplete] Category search input: "${redactTextOutput(value)}"`);
       try {
         const categories = await categoriesCache.get(client.cacheKey(), () =>
           fetchCategories(client, { limit: AUTOCOMPLETE_FETCH_LIMIT }),
@@ -103,9 +104,9 @@ export function registerCategoryTools(server: McpServer, client: FireflyClient):
           .filter((label) => label.toLowerCase().includes(value.toLowerCase()))
           .slice(0, AUTOCOMPLETE_MAX_SUGGESTIONS);
         debugLog(`[Autocomplete] Category suggestions found: ${suggestions.length}`);
-        return suggestions;
-      } catch (err) {
-        debugLog('[Autocomplete Error - Category]:', err);
+        return suggestions.map(redactCompletionOutput);
+      } catch {
+        debugLog('[Autocomplete Error - Category] Lookup failed.');
         return [];
       }
     },

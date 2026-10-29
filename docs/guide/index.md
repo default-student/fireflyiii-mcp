@@ -35,3 +35,7 @@ Want to test unreleased changes from `main`? Install a [nightly build](./nightly
 The server exposes Firefly III's REST API as MCP tools. Your AI assistant calls these tools automatically when you ask finance-related questions. You never write API calls manually.
 
 With 137 tools across 14 groups, you can optionally load only a subset to save context window space — see [Tool filtering](/reference/filtering).
+
+## Monetary output privacy
+
+Tool responses are filtered before they reach the MCP client. Monetary fields and unknown numeric values are returned as `[hidden]`; free text or CSV containing monetary markers is hidden conservatively. IDs, ISO dates, status fields, and pagination counts remain available when their meaning is clear. Image attachments are withheld because the server cannot redact amounts inside an image. This applies to MCP responses, errors, and autocomplete suggestions. Write-tool inputs, direct shell or SSH access, and Firefly III itself are outside this response filter.

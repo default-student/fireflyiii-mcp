@@ -2,6 +2,7 @@ import { completable } from '@modelcontextprotocol/sdk/server/completable.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { FireflyClient } from '../client.js';
+import { redactCompletionOutput, redactTextOutput } from '../privacy.js';
 import {
   type JsonApiListResponse,
   type JsonApiSingleResponse,
@@ -189,7 +190,7 @@ export function registerBudgetTools(server: McpServer, client: FireflyClient): v
   const budgetIdSchema = completable(
     z.string().describe('Budget ID — use get_budgets to find valid IDs'),
     async (value) => {
-      debugLog(`[Autocomplete] Budget search input: "${value}"`);
+      debugLog(`[Autocomplete] Budget search input: "${redactTextOutput(value)}"`);
       try {
         const budgets = await budgetsCache.get(client.cacheKey(), () =>
           fetchBudgets(client, { limit: AUTOCOMPLETE_FETCH_LIMIT }),
@@ -199,9 +200,9 @@ export function registerBudgetTools(server: McpServer, client: FireflyClient): v
           .filter((label) => label.toLowerCase().includes(value.toLowerCase()))
           .slice(0, AUTOCOMPLETE_MAX_SUGGESTIONS);
         debugLog(`[Autocomplete] Budget suggestions found: ${suggestions.length}`);
-        return suggestions;
-      } catch (err) {
-        debugLog('[Autocomplete Error - Budget]:', err);
+        return suggestions.map(redactCompletionOutput);
+      } catch {
+        debugLog('[Autocomplete Error - Budget] Lookup failed.');
         return [];
       }
     },

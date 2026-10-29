@@ -2,6 +2,7 @@ import { completable } from '@modelcontextprotocol/sdk/server/completable.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { FireflyClient } from '../client.js';
+import { redactCompletionOutput, redactTextOutput } from '../privacy.js';
 import {
   type JsonApiListResponse,
   type JsonApiSingleResponse,
@@ -202,7 +203,7 @@ export function registerAccountTools(server: McpServer, client: FireflyClient): 
   const accountIdSchema = completable(
     z.string().describe('Account ID — use get_accounts to find valid IDs'),
     async (value) => {
-      debugLog(`[Autocomplete] Account search input: "${value}"`);
+      debugLog(`[Autocomplete] Account search input: "${redactTextOutput(value)}"`);
       try {
         const accounts = await accountsCache.get(client.cacheKey(), () =>
           fetchAccounts(client, { limit: AUTOCOMPLETE_FETCH_LIMIT }),
@@ -212,9 +213,9 @@ export function registerAccountTools(server: McpServer, client: FireflyClient): 
           .filter((label) => label.toLowerCase().includes(value.toLowerCase()))
           .slice(0, AUTOCOMPLETE_MAX_SUGGESTIONS);
         debugLog(`[Autocomplete] Account suggestions found: ${suggestions.length}`);
-        return suggestions;
-      } catch (err) {
-        debugLog('[Autocomplete Error - Account]:', err);
+        return suggestions.map(redactCompletionOutput);
+      } catch {
+        debugLog('[Autocomplete Error - Account] Lookup failed.');
         return [];
       }
     },
